@@ -12,9 +12,6 @@
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
 
@@ -48,20 +45,17 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
 	NumJumps = 0;
+	DoubleJumpZVelocity = 600.0f;
 }
 
 // Called when the game starts or when spawned
 void ABAPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	BaseJumpZVelocity = GetCharacterMovement()->JumpZVelocity;
 }
 
-// Called every frame
-void ABAPlayerCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 
 // Called to bind functionality to input
 void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -69,7 +63,6 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABAPlayerCharacter::OnJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ABAPlayerCharacter::OnJumpEnd);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABAPlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABAPlayerCharacter::MoveRight);
@@ -130,11 +123,9 @@ void ABAPlayerCharacter::LookUpAtRate(float Rate)
 
 void ABAPlayerCharacter::OnJump()
 {
-	UE_LOG(LogTemp, Warning, TEXT("NumJumps: %s"), *FString::FromInt(NumJumps));
 	if (NumJumps == 1)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DSASDADAS"));
-		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->JumpZVelocity = DoubleJumpZVelocity;
 	}
 
 	NumJumps++;
@@ -142,9 +133,11 @@ void ABAPlayerCharacter::OnJump()
 }
 
 
-void ABAPlayerCharacter::OnJumpEnd()
+void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 {
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	Super::Landed(Hit);
+
 	StopJumping();
 	NumJumps = 0;
+	GetCharacterMovement()->JumpZVelocity = BaseJumpZVelocity;
 }

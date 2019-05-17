@@ -16,8 +16,6 @@ public:
 	ABAPlayerCharacter();
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -46,7 +44,7 @@ protected:
 
 	void OnJump();
 
-	void OnJumpEnd();
+	virtual void Landed(const FHitResult& Hit) override;
 
 protected:
 	/** Camera boom positioning the camera behind the character */
@@ -67,4 +65,9 @@ protected:
 	float BaseLookUpRate;
 
 	int32 NumJumps;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	float DoubleJumpZVelocity;
+
+	float BaseJumpZVelocity;
 };
