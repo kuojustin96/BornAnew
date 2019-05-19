@@ -46,6 +46,10 @@ protected:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	void OnSprintStart();
+
+	void OnSprintEnd();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -66,8 +70,21 @@ protected:
 
 	int32 NumJumps;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	/** Jump velocity of the 2nd jump */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float DoubleJumpZVelocity;
 
 	float BaseJumpZVelocity;
+
+	/** Speed that the player will sprint at */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float SprintSpeed;
+
+	float BaseWalkSpeed;
+
+	/** FOV the camera will transition to when sprinting */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float SprintingFOV;
+
+	float BaseWalkingFOV;
 };

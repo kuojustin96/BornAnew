@@ -46,6 +46,9 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 
 	NumJumps = 0;
 	DoubleJumpZVelocity = 600.0f;
+	
+	SprintSpeed = 1000.0f;
+	SprintingFOV = 100.0f;
 }
 
 // Called when the game starts or when spawned
@@ -53,7 +56,12 @@ void ABAPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Set base values
 	BaseJumpZVelocity = GetCharacterMovement()->JumpZVelocity;
+	BaseWalkSpeed = GetCharacterMovement()->GetMaxSpeed();
+	BaseWalkingFOV = FollowCamera->FieldOfView;
+
+	
 }
 
 
@@ -63,6 +71,8 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABAPlayerCharacter::OnJump);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ABAPlayerCharacter::OnSprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ABAPlayerCharacter::OnSprintEnd);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABAPlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABAPlayerCharacter::MoveRight);
@@ -140,4 +150,18 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 	StopJumping();
 	NumJumps = 0;
 	GetCharacterMovement()->JumpZVelocity = BaseJumpZVelocity;
+}
+
+
+void ABAPlayerCharacter::OnSprintStart()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	FollowCamera->SetFieldOfView(SprintingFOV);
+}
+
+
+void ABAPlayerCharacter::OnSprintEnd()
+{
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	FollowCamera->SetFieldOfView(BaseWalkingFOV);
 }
