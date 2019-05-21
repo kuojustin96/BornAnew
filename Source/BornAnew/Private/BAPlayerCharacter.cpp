@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "BAPlayerAnimInstance.h"
 
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
@@ -47,6 +48,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	NumJumps = 0;
 	DoubleJumpZVelocity = 600.0f;
 	
+	bIsSliding = false;
+	
 	SprintSpeed = 1000.0f;
 	SprintingFOV = 100.0f;
 }
@@ -61,7 +64,10 @@ void ABAPlayerCharacter::BeginPlay()
 	BaseWalkSpeed = GetCharacterMovement()->GetMaxSpeed();
 	BaseWalkingFOV = FollowCamera->FieldOfView;
 
-	
+	if (GetMesh() != nullptr)
+	{
+		AnimInstance = Cast<UBAPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	}
 }
 
 
@@ -73,6 +79,8 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABAPlayerCharacter::OnJump);
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ABAPlayerCharacter::OnSprintStart);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ABAPlayerCharacter::OnSprintEnd);
+	PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &ABAPlayerCharacter::OnSlideStart);
+	PlayerInputComponent->BindAction("Slide", IE_Released, this, &ABAPlayerCharacter::OnSlideEnd);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABAPlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABAPlayerCharacter::MoveRight);
@@ -88,7 +96,7 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ABAPlayerCharacter::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if ((Controller != nullptr) && (Value != 0.0f) && (bIsSliding == false))
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -103,7 +111,7 @@ void ABAPlayerCharacter::MoveForward(float Value)
 
 void ABAPlayerCharacter::MoveRight(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if ((Controller != nullptr) && (Value != 0.0f) && (bIsSliding == false))
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -140,6 +148,14 @@ void ABAPlayerCharacter::OnJump()
 
 	NumJumps++;
 	Jump();
+	
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->bIsJumping = true;
+
+		//Probably want to set somewhere else
+		AnimInstance->bIsSliding = false;
+	}
 }
 
 
@@ -150,11 +166,22 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 	StopJumping();
 	NumJumps = 0;
 	GetCharacterMovement()->JumpZVelocity = BaseJumpZVelocity;
+
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->bIsJumping = false;
+	}
 }
 
 
 void ABAPlayerCharacter::OnSprintStart()
 {
+	//Check if not jumping
+	if (NumJumps > 0)
+	{
+		return;
+	}
+
 	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	FollowCamera->SetFieldOfView(SprintingFOV);
 }
@@ -164,4 +191,33 @@ void ABAPlayerCharacter::OnSprintEnd()
 {
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	FollowCamera->SetFieldOfView(BaseWalkingFOV);
+}
+
+
+void ABAPlayerCharacter::OnSlideStart()
+{
+	//Check if not jumping
+	if (NumJumps > 0)
+	{
+		return;
+	}
+
+	bIsSliding = true;
+	GetCharacterMovement()->AddImpulse(GetActorForwardVector() * GetCharacterMovement()->MaxWalkSpeed * 5.0f, true);
+
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->bIsSliding = true;
+	}
+}
+
+
+void ABAPlayerCharacter::OnSlideEnd()
+{
+	bIsSliding = false;
+
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->bIsSliding = false;
+	}
 }

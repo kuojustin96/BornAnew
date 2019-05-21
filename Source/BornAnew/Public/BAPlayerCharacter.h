@@ -6,6 +6,10 @@
 #include "GameFramework/Character.h"
 #include "BAPlayerCharacter.generated.h"
 
+
+class UBAPlayerAnimInstance;
+
+
 UCLASS()
 class BORNANEW_API ABAPlayerCharacter : public ACharacter
 {
@@ -50,6 +54,10 @@ protected:
 
 	void OnSprintEnd();
 
+	void OnSlideStart();
+
+	void OnSlideEnd();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -58,6 +66,8 @@ protected:
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	class UCameraComponent* FollowCamera;
+
+	UBAPlayerAnimInstance* AnimInstance;
 
 protected:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -87,4 +97,7 @@ protected:
 	float SprintingFOV;
 
 	float BaseWalkingFOV;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bIsSliding;
 };
