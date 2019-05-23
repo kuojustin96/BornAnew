@@ -9,6 +9,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "BAPlayerAnimInstance.h"
+#include "Curves/CurveFloat.h"
 
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
@@ -53,6 +54,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	WallJumpZVelocity = 600.0f;
 	
 	bIsSliding = false;
+	bCanSlide = true;
 	bIsOnWall = false;
 	bCanWallJump = true;
 	
@@ -60,6 +62,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SprintingFOV = 100.0f;
 	WallGrabDuration = 1.0f;
 	SlideDownWallGravityScale = 0.25f;
+
+	SlideCooldown = 1.0f;
 }
 
 // Called when the game starts or when spawned
@@ -73,6 +77,11 @@ void ABAPlayerCharacter::BeginPlay()
 	BaseWalkingFOV = FollowCamera->FieldOfView;
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 	BaseMaxNumJumps = JumpMaxCount;
+
+	if (JumpSlideComboSpeedCurve != nullptr)
+	{
+		MaxHeightToGainSpeed = JumpSlideComboSpeedCurve->GetFloatValue(1.0f);
+	}
 
 	if (GetMesh() != nullptr)
 	{
@@ -238,6 +247,11 @@ void ABAPlayerCharacter::OnSprintEnd()
 
 void ABAPlayerCharacter::OnSlideStart()
 {
+	if (bCanSlide == false || GetCharacterMovement()->Velocity.Size() == 0.0f)
+	{
+		return;
+	}
+
 	//Check if not jumping
 	if (NumJumps > 0)
 	{
@@ -245,6 +259,7 @@ void ABAPlayerCharacter::OnSlideStart()
 	}
 
 	bIsSliding = true;
+	bCanSlide = false;
 	GetCharacterMovement()->AddImpulse(GetActorForwardVector() * GetCharacterMovement()->MaxWalkSpeed * 5.0f, true);
 
 	if (AnimInstance != nullptr)
@@ -256,12 +271,26 @@ void ABAPlayerCharacter::OnSlideStart()
 
 void ABAPlayerCharacter::OnSlideEnd()
 {
+	if (bIsSliding == false)
+	{
+		return;
+	}
+
 	bIsSliding = false;
+
+	GetWorldTimerManager().SetTimer(AllowSlidingTimerHandle, this, &ABAPlayerCharacter::EnableSliding, SlideCooldown, false);
 
 	if (AnimInstance != nullptr)
 	{
 		AnimInstance->bIsSliding = false;
 	}
+}
+
+
+void ABAPlayerCharacter::EnableSliding()
+{
+	GetWorldTimerManager().ClearTimer(AllowSlidingTimerHandle);
+	bCanSlide = true;
 }
 
 

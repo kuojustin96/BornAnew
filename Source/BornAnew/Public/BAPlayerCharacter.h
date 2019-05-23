@@ -63,6 +63,8 @@ protected:
 
 	void SlideDownWall();
 
+	void EnableSliding();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -88,30 +90,50 @@ protected:
 	int32 NumJumps;
 
 	/** Jump velocity of the 2nd jump */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Jump")
 	float DoubleJumpZVelocity;
 
 	float BaseJumpZVelocity;
 
+	/** Absolute maximum speed a player can move at */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float MaxMovementSpeed;
+
+	/** Max height difference that will be used to calculate the amount of speed gained
+	when successfully hitting a jump slide combo. Max hiehgt must be set in the curve.
+	HeightDifference = JumpApexZ - LandingZ */
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float MaxHeightToGainSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	class UCurveFloat* JumpSlideComboSpeedCurve;
+
 	/** Speed that the player will sprint at */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float SprintSpeed;
 
 	float BaseWalkSpeed;
 
 	/** FOV the camera will transition to when sprinting */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float SprintingFOV;
 
 	float BaseWalkingFOV;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
 	bool bIsSliding;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bCanSlide;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
+	float SlideCooldown;
+
+	FTimerHandle AllowSlidingTimerHandle;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Wall Jump")
 	bool bIsOnWall;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Wall Jump")
 	float WallJumpZVelocity;
 
 	bool bCanWallJump;
@@ -122,9 +144,9 @@ protected:
 
 	FTimerHandle SlideDownWallTimerHandle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wall Jump")
 	float WallGrabDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wall Jump")
 	float SlideDownWallGravityScale;
 };
