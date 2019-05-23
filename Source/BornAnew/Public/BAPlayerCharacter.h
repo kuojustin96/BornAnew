@@ -58,6 +58,11 @@ protected:
 
 	void OnSlideEnd();
 
+	UFUNCTION()
+	void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void SlideDownWall();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -68,6 +73,8 @@ protected:
 	class UCameraComponent* FollowCamera;
 
 	UBAPlayerAnimInstance* AnimInstance;
+
+	UCapsuleComponent* CapsuleOverlapComp;
 
 protected:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -100,4 +107,24 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsSliding;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bIsOnWall;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float WallJumpZVelocity;
+
+	bool bCanWallJump;
+
+	float BaseGravityScale;
+
+	int32 BaseMaxNumJumps;
+
+	FTimerHandle SlideDownWallTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float WallGrabDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float SlideDownWallGravityScale;
 };

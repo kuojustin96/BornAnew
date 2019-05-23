@@ -42,16 +42,24 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	CapsuleOverlapComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleOverlapComp"));
+	CapsuleOverlapComp->InitCapsuleSize(50.0f, 100.0f);
+	CapsuleOverlapComp->SetupAttachment(RootComponent);
+	CapsuleOverlapComp->OnComponentBeginOverlap.AddDynamic(this, &ABAPlayerCharacter::OnCapsuleBeginOverlap);
 
 	NumJumps = 0;
 	DoubleJumpZVelocity = 600.0f;
+	WallJumpZVelocity = 600.0f;
 	
 	bIsSliding = false;
+	bIsOnWall = false;
+	bCanWallJump = true;
 	
 	SprintSpeed = 1000.0f;
 	SprintingFOV = 100.0f;
+	WallGrabDuration = 1.0f;
+	SlideDownWallGravityScale = 0.25f;
 }
 
 // Called when the game starts or when spawned
@@ -63,6 +71,8 @@ void ABAPlayerCharacter::BeginPlay()
 	BaseJumpZVelocity = GetCharacterMovement()->JumpZVelocity;
 	BaseWalkSpeed = GetCharacterMovement()->GetMaxSpeed();
 	BaseWalkingFOV = FollowCamera->FieldOfView;
+	BaseGravityScale = GetCharacterMovement()->GravityScale;
+	BaseMaxNumJumps = JumpMaxCount;
 
 	if (GetMesh() != nullptr)
 	{
@@ -96,6 +106,11 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ABAPlayerCharacter::MoveForward(float Value)
 {
+	if (bIsOnWall)
+	{
+		return;
+	}
+
 	if ((Controller != nullptr) && (Value != 0.0f) && (bIsSliding == false))
 	{
 		// find out which way is forward
@@ -111,6 +126,11 @@ void ABAPlayerCharacter::MoveForward(float Value)
 
 void ABAPlayerCharacter::MoveRight(float Value)
 {
+	if (bIsOnWall)
+	{
+		return;
+	}
+
 	if ((Controller != nullptr) && (Value != 0.0f) && (bIsSliding == false))
 	{
 		// find out which way is right
@@ -141,9 +161,18 @@ void ABAPlayerCharacter::LookUpAtRate(float Rate)
 
 void ABAPlayerCharacter::OnJump()
 {
-	if (NumJumps == 1)
+	if (NumJumps > 0)
 	{
 		GetCharacterMovement()->JumpZVelocity = DoubleJumpZVelocity;
+	}
+
+	if (bIsOnWall)
+	{
+		GetCharacterMovement()->JumpZVelocity = WallJumpZVelocity;
+
+		bIsOnWall = false;
+		GetCharacterMovement()->GravityScale = BaseGravityScale;
+		GetWorldTimerManager().ClearTimer(SlideDownWallTimerHandle);
 	}
 
 	NumJumps++;
@@ -163,9 +192,22 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	if (bIsOnWall == true)
+	{
+		bIsOnWall = false;
+		GetCharacterMovement()->GravityScale = BaseGravityScale;
+	}
+
 	StopJumping();
 	NumJumps = 0;
 	GetCharacterMovement()->JumpZVelocity = BaseJumpZVelocity;
+
+	//Reset max jumps if the player just wall jumped
+	if (JumpMaxCount > BaseMaxNumJumps)
+	{
+		JumpMaxCount = BaseMaxNumJumps;
+		bCanWallJump = true;
+	}
 
 	if (AnimInstance != nullptr)
 	{
@@ -220,4 +262,32 @@ void ABAPlayerCharacter::OnSlideEnd()
 	{
 		AnimInstance->bIsSliding = false;
 	}
+}
+
+
+void ABAPlayerCharacter::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherComp->ComponentHasTag("WallJump"))
+	{
+		if (NumJumps > 0 && bCanWallJump == true)
+		{
+			bIsOnWall = true;
+			bCanWallJump = false;
+
+			GetCharacterMovement()->StopMovementImmediately();
+			GetCharacterMovement()->GravityScale = 0.0f;
+			JumpMaxCount = BaseMaxNumJumps + 1;
+
+			GetWorldTimerManager().SetTimer(SlideDownWallTimerHandle, this, &ABAPlayerCharacter::SlideDownWall, WallGrabDuration, false);
+		}
+	}
+}
+
+
+void ABAPlayerCharacter::SlideDownWall()
+{
+	UE_LOG(LogTemp, Warning, TEXT("SLIDING DOWN WALL"));
+
+	GetCharacterMovement()->GravityScale = SlideDownWallGravityScale;
+	GetWorldTimerManager().ClearTimer(SlideDownWallTimerHandle);
 }
