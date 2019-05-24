@@ -65,6 +65,12 @@ protected:
 
 	void EnableSliding();
 
+	UFUNCTION()
+	void EnableFallingTrace();
+
+	UFUNCTION()
+	void CheckForJumpSlideCombo();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -128,7 +134,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
 	float SlideCooldown;
 
-	FTimerHandle AllowSlidingTimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
+	float JumpSlideComboBuffer;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
+	float JumpSlideTraceLength;
+
+	float JumpApexZ;
+
+	float MaxJumpHeight;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Jump")
 	bool bIsOnWall;
@@ -142,11 +156,16 @@ protected:
 
 	int32 BaseMaxNumJumps;
 
-	FTimerHandle SlideDownWallTimerHandle;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wall Jump")
 	float WallGrabDuration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wall Jump")
 	float SlideDownWallGravityScale;
+
+protected:
+	FTimerHandle AllowSlidingTimerHandle;
+
+	FTimerHandle SlideDownWallTimerHandle;
+
+	FTimerHandle JumpSlideBufferTimerHandle;
 };

@@ -2,6 +2,7 @@
 
 
 #include "BAPlayerCharacter.h"
+#include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -10,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "BAPlayerAnimInstance.h"
 #include "Curves/CurveFloat.h"
+#include "TimerManager.h"
 
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
@@ -64,6 +66,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SlideDownWallGravityScale = 0.25f;
 
 	SlideCooldown = 1.0f;
+	JumpSlideComboBuffer = 0.25f;
+	JumpSlideTraceLength = 200.0f;
 }
 
 // Called when the game starts or when spawned
@@ -71,12 +75,16 @@ void ABAPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	OnReachedJumpApex.AddDynamic(this, &ABAPlayerCharacter::EnableFallingTrace);
+
 	// Set base values
 	BaseJumpZVelocity = GetCharacterMovement()->JumpZVelocity;
 	BaseWalkSpeed = GetCharacterMovement()->GetMaxSpeed();
 	BaseWalkingFOV = FollowCamera->FieldOfView;
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 	BaseMaxNumJumps = JumpMaxCount;
+
+	MaxJumpHeight = GetCharacterMovement()->GetMaxJumpHeight() * JumpMaxCount;
 
 	if (JumpSlideComboSpeedCurve != nullptr)
 	{
@@ -168,8 +176,34 @@ void ABAPlayerCharacter::LookUpAtRate(float Rate)
 }
 
 
+void ABAPlayerCharacter::OnSprintStart()
+{
+	//Check if not jumping
+	if (NumJumps > 0)
+	{
+		return;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	FollowCamera->SetFieldOfView(SprintingFOV);
+}
+
+
+void ABAPlayerCharacter::OnSprintEnd()
+{
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	FollowCamera->SetFieldOfView(BaseWalkingFOV);
+}
+
+
 void ABAPlayerCharacter::OnJump()
 {
+	GetCharacterMovement()->bNotifyApex = true;
+	if (GetWorldTimerManager().IsTimerActive(JumpSlideBufferTimerHandle))
+	{
+		GetWorldTimerManager().ClearTimer(JumpSlideBufferTimerHandle);
+	}
+
 	if (NumJumps > 0)
 	{
 		GetCharacterMovement()->JumpZVelocity = DoubleJumpZVelocity;
@@ -186,6 +220,8 @@ void ABAPlayerCharacter::OnJump()
 
 	NumJumps++;
 	Jump();
+
+	bCanSlide = false;
 	
 	if (AnimInstance != nullptr)
 	{
@@ -225,23 +261,31 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 }
 
 
-void ABAPlayerCharacter::OnSprintStart()
+void ABAPlayerCharacter::EnableFallingTrace()
 {
-	//Check if not jumping
-	if (NumJumps > 0)
-	{
-		return;
-	}
+	GetWorldTimerManager().SetTimer(JumpSlideBufferTimerHandle, this, &ABAPlayerCharacter::CheckForJumpSlideCombo, 0.01f, true);
 
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-	FollowCamera->SetFieldOfView(SprintingFOV);
+	JumpApexZ = GetActorLocation().Z;
 }
 
 
-void ABAPlayerCharacter::OnSprintEnd()
+void ABAPlayerCharacter::CheckForJumpSlideCombo()
 {
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-	FollowCamera->SetFieldOfView(BaseWalkingFOV);
+	FHitResult OutHit;
+	FVector End = (-GetActorUpVector() * JumpSlideTraceLength) + GetActorLocation();
+	FCollisionQueryParams CollisionParams;
+
+	DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
+
+	if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), End, ECC_Visibility, CollisionParams))
+	{
+		if (OutHit.bBlockingHit == true)
+		{
+			GetWorldTimerManager().ClearTimer(JumpSlideBufferTimerHandle);
+
+			EnableSliding();
+		}
+	}
 }
 
 
@@ -252,15 +296,29 @@ void ABAPlayerCharacter::OnSlideStart()
 		return;
 	}
 
-	//Check if not jumping
-	if (NumJumps > 0)
+	//Check if not jumping, override if the player is within the jumpslide combo window
+	if (NumJumps > 0 && bCanSlide == false)
 	{
 		return;
 	}
 
 	bIsSliding = true;
 	bCanSlide = false;
-	GetCharacterMovement()->AddImpulse(GetActorForwardVector() * GetCharacterMovement()->MaxWalkSpeed * 5.0f, true);
+
+	//Make sure the player isnt over the max speed threshold
+	if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed) 
+	{
+		//Calculate the amount of velocity to add
+		float HeightDifference = JumpApexZ - GetActorLocation().Z;
+		
+		JumpApexZ = 0; // Reset for next use, and so nothing is calculated if there is no combo
+
+		float PercentageIncrease = JumpSlideComboSpeedCurve->GetFloatValue(HeightDifference / MaxJumpHeight);
+		UE_LOG(LogTemp, Warning, TEXT("Percentage Increase: %f"), PercentageIncrease);
+		float TotalSlideSpeed = GetCharacterMovement()->Velocity.Size() + PercentageIncrease;
+
+		GetCharacterMovement()->AddImpulse(GetActorForwardVector() * TotalSlideSpeed * 5.0f, true);
+	}
 
 	if (AnimInstance != nullptr)
 	{
