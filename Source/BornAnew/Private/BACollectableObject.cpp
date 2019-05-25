@@ -10,17 +10,23 @@ ABACollectableObject::ABACollectableObject()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetGenerateOverlapEvents(true);
 	RootComponent = MeshComp;
+
+	MeshComp->SetCollisionProfileName(TEXT("OverlapCollectable"));
+
+	LifespanAfterCollection = 5.0f;
 }
 
 // Called when the game starts or when spawned
 void ABACollectableObject::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 
-void ABACollectableObject::OnObjectPickedUp_Implementation()
+void ABACollectableObject::OnCollected_Implementation()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Object Collected!"));
+	MeshComp->SetVisibility(false);
 
+	SetLifeSpan(LifespanAfterCollection);
 }

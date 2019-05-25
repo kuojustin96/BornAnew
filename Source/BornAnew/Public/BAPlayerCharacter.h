@@ -72,6 +72,9 @@ protected:
 	UFUNCTION()
 	void CheckForJumpSlideCombo();
 
+	UFUNCTION()
+	void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -83,7 +86,11 @@ protected:
 
 	UBAPlayerAnimInstance* AnimInstance;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UCapsuleComponent* CapsuleOverlapComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class USphereComponent* SphereOverlapComp;
 
 protected:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */

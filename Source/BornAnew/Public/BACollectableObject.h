@@ -16,7 +16,7 @@ public:
 	ABACollectableObject();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnObjectPickedUp();
+	void OnCollected();
 
 protected:
 	// Called when the game starts or when spawned
@@ -24,4 +24,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MeshComp;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float LifespanAfterCollection;
 };

@@ -5,11 +5,13 @@
 #include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "BAPlayerAnimInstance.h"
+#include "BACollectableObject.h"
 #include "Curves/CurveFloat.h"
 #include "TimerManager.h"
 
@@ -52,6 +54,11 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	CapsuleOverlapComp->InitCapsuleSize(50.0f, 100.0f);
 	CapsuleOverlapComp->SetupAttachment(RootComponent);
 	CapsuleOverlapComp->OnComponentBeginOverlap.AddDynamic(this, &ABAPlayerCharacter::OnCapsuleBeginOverlap);
+
+	SphereOverlapComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereOverlapComp"));
+	SphereOverlapComp->InitSphereRadius(100.0f);
+	SphereOverlapComp->SetupAttachment(RootComponent);
+	SphereOverlapComp->OnComponentBeginOverlap.AddDynamic(this, &ABAPlayerCharacter::OnSphereBeginOverlap);
 
 	NumJumps = 0;
 	DoubleJumpZVelocity = 600.0f;
@@ -378,4 +385,14 @@ void ABAPlayerCharacter::SlideDownWall()
 {
 	GetCharacterMovement()->GravityScale = SlideDownWallGravityScale;
 	GetWorldTimerManager().ClearTimer(SlideDownWallTimerHandle);
+}
+
+
+void ABAPlayerCharacter::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ABACollectableObject* Collectable = Cast<ABACollectableObject>(OtherActor);
+	if (Collectable != nullptr)
+	{
+		Collectable->OnCollected();
+	}
 }
