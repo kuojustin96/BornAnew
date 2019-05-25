@@ -20,6 +20,7 @@ public:
 	ABAPlayerCharacter();
 
 public:	
+	virtual void Tick(float DeltaSeconds) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -140,9 +141,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
 	float JumpSlideTraceLength;
 
-	float JumpApexZ;
-
-	float MaxJumpHeight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
+	float SlideImpulseBoostTolerance;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Jump")
 	bool bIsOnWall;

@@ -16,6 +16,8 @@
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
 
@@ -68,6 +70,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SlideCooldown = 1.0f;
 	JumpSlideComboBuffer = 0.25f;
 	JumpSlideTraceLength = 200.0f;
+	SlideImpulseBoostTolerance = 1.5f;
 }
 
 // Called when the game starts or when spawned
@@ -83,8 +86,6 @@ void ABAPlayerCharacter::BeginPlay()
 	BaseWalkingFOV = FollowCamera->FieldOfView;
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 	BaseMaxNumJumps = JumpMaxCount;
-
-	MaxJumpHeight = GetCharacterMovement()->GetMaxJumpHeight() * JumpMaxCount;
 
 	if (JumpSlideComboSpeedCurve != nullptr)
 	{
@@ -120,6 +121,13 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ABAPlayerCharacter::LookUpAtRate);
 }
+
+
+void ABAPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+}
+
 
 void ABAPlayerCharacter::MoveForward(float Value)
 {
@@ -264,8 +272,6 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 void ABAPlayerCharacter::EnableFallingTrace()
 {
 	GetWorldTimerManager().SetTimer(JumpSlideBufferTimerHandle, this, &ABAPlayerCharacter::CheckForJumpSlideCombo, 0.01f, true);
-
-	JumpApexZ = GetActorLocation().Z;
 }
 
 
@@ -275,7 +281,7 @@ void ABAPlayerCharacter::CheckForJumpSlideCombo()
 	FVector End = (-GetActorUpVector() * JumpSlideTraceLength) + GetActorLocation();
 	FCollisionQueryParams CollisionParams;
 
-	DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
+	//DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
 
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), End, ECC_Visibility, CollisionParams))
 	{
@@ -308,16 +314,13 @@ void ABAPlayerCharacter::OnSlideStart()
 	//Make sure the player isnt over the max speed threshold
 	if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed) 
 	{
-		//Calculate the amount of velocity to add
-		float HeightDifference = JumpApexZ - GetActorLocation().Z;
-		
-		JumpApexZ = 0; // Reset for next use, and so nothing is calculated if there is no combo
+		float LookupAmount = GetCharacterMovement()->Velocity.Size() / SprintSpeed;
 
-		float PercentageIncrease = JumpSlideComboSpeedCurve->GetFloatValue(HeightDifference / MaxJumpHeight);
-		UE_LOG(LogTemp, Warning, TEXT("Percentage Increase: %f"), PercentageIncrease);
-		float TotalSlideSpeed = GetCharacterMovement()->Velocity.Size() + PercentageIncrease;
-
-		GetCharacterMovement()->AddImpulse(GetActorForwardVector() * TotalSlideSpeed * 5.0f, true);
+		if (LookupAmount < SlideImpulseBoostTolerance)
+		{
+			float SlideSpeed = JumpSlideComboSpeedCurve->GetFloatValue(LookupAmount);
+			GetCharacterMovement()->AddImpulse(GetActorForwardVector() * SlideSpeed * 5.0f, true);
+		}
 	}
 
 	if (AnimInstance != nullptr)
@@ -373,8 +376,6 @@ void ABAPlayerCharacter::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedCo
 
 void ABAPlayerCharacter::SlideDownWall()
 {
-	UE_LOG(LogTemp, Warning, TEXT("SLIDING DOWN WALL"));
-
 	GetCharacterMovement()->GravityScale = SlideDownWallGravityScale;
 	GetWorldTimerManager().ClearTimer(SlideDownWallTimerHandle);
 }
