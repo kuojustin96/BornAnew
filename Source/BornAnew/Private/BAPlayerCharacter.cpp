@@ -305,8 +305,10 @@ void ABAPlayerCharacter::CheckForJumpSlideCombo()
 float ABAPlayerCharacter::GetCurrentSlopeAngle()
 {
 	FHitResult OutHit;
-	FVector End = (-GetActorUpVector() * JumpSlideTraceLength) + GetActorLocation();
+	FVector End = (-GetActorUpVector() * 150.0f) + GetActorLocation();
 	FCollisionQueryParams CollisionParams;
+
+	float SlopeAngle = 0.0f;
 
 	//DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
 
@@ -314,23 +316,17 @@ float ABAPlayerCharacter::GetCurrentSlopeAngle()
 	{
 		if (OutHit.bBlockingHit == true)
 		{
-			GetWorldTimerManager().ClearTimer(JumpSlideBufferTimerHandle);
-
-			EnableSliding();
+			float DotProductNormal = FVector::DotProduct(-GetActorUpVector().GetSafeNormal(), OutHit.ImpactNormal.GetSafeNormal());
+			SlopeAngle = 180.0f - FMath::Acos(DotProductNormal);
 		}
 	}
 
-	return 0.0f;
+	return SlopeAngle;
 }
 
 
 void ABAPlayerCharacter::OnSlideStart()
 {
-	if (bCanSlide == false || GetCharacterMovement()->Velocity.Size() == 0.0f)
-	{
-		return;
-	}
-
 	//Check if not jumping, override if the player is within the jumpslide combo window
 	if (NumJumps > 0 && bCanSlide == false)
 	{
@@ -340,8 +336,13 @@ void ABAPlayerCharacter::OnSlideStart()
 	bIsSliding = true;
 	bCanSlide = false;
 
+	float SlopeAngle = GetCurrentSlopeAngle();
+	//if player is not a slope, run original code
+	//else start a timer that will maintain whatever velocity should be applied until the slide button is released
+	//	or until the slope evens out, 
+
 	//Make sure the player isnt over the max speed threshold
-	if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed) 
+	if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed && GetCharacterMovement()->Velocity.Size() != 0.0f)
 	{
 		float LookupAmount = GetCharacterMovement()->Velocity.Size() / SprintSpeed;
 
