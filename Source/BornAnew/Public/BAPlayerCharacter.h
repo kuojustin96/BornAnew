@@ -66,6 +66,8 @@ protected:
 
 	void EnableSliding();
 
+	float GetCurrentSlopeAngle();
+
 	UFUNCTION()
 	void EnableFallingTrace();
 

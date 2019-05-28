@@ -302,6 +302,28 @@ void ABAPlayerCharacter::CheckForJumpSlideCombo()
 }
 
 
+float ABAPlayerCharacter::GetCurrentSlopeAngle()
+{
+	FHitResult OutHit;
+	FVector End = (-GetActorUpVector() * JumpSlideTraceLength) + GetActorLocation();
+	FCollisionQueryParams CollisionParams;
+
+	//DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
+
+	if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), End, ECC_Visibility, CollisionParams))
+	{
+		if (OutHit.bBlockingHit == true)
+		{
+			GetWorldTimerManager().ClearTimer(JumpSlideBufferTimerHandle);
+
+			EnableSliding();
+		}
+	}
+
+	return 0.0f;
+}
+
+
 void ABAPlayerCharacter::OnSlideStart()
 {
 	if (bCanSlide == false || GetCharacterMovement()->Velocity.Size() == 0.0f)
