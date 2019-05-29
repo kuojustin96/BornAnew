@@ -69,6 +69,9 @@ protected:
 	float GetCurrentSlopeAngle();
 
 	UFUNCTION()
+	void MaintainSlidingSpeed();
+
+	UFUNCTION()
 	void EnableFallingTrace();
 
 	UFUNCTION()
@@ -121,9 +124,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float MaxHeightToGainSpeed;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	class UCurveFloat* JumpSlideComboSpeedCurve;
-
 	/** Speed that the player will sprint at */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float SprintSpeed;
@@ -136,8 +136,26 @@ protected:
 
 	float BaseWalkingFOV;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
+	UPROPERTY(EditDefaultsOnly, Category = "Sliding")
+	class UCurveFloat* BaseSlideSpeedCurve;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sliding")
+	class UCurveFloat* SlideOnSlopeSpeedCurve;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Sliding")
 	bool bIsSliding;
+
+	FVector SlopeDirection;
+
+	float TimeSliding;
+
+	/** Multiplier amount that will effect how quickly the player gains speed when sliding down a slope */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
+	float TimeSlidingMuliplier;
+
+	/** Max value on the sliding curve that will be allowed */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
+	float MaxSlideCurveValue;
 
 	bool bCanSlide;
 
@@ -149,9 +167,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
 	float JumpSlideTraceLength;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
-	float SlideImpulseBoostTolerance;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Jump")
 	bool bIsOnWall;
@@ -177,4 +192,6 @@ protected:
 	FTimerHandle SlideDownWallTimerHandle;
 
 	FTimerHandle JumpSlideBufferTimerHandle;
+
+	FTimerHandle SlidingOnSlopeTimerHandle;
 };

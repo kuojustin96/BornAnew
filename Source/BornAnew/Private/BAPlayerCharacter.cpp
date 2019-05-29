@@ -77,7 +77,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SlideCooldown = 1.0f;
 	JumpSlideComboBuffer = 0.25f;
 	JumpSlideTraceLength = 200.0f;
-	SlideImpulseBoostTolerance = 1.5f;
+	MaxSlideCurveValue = 1.5f;
+	TimeSlidingMuliplier = 10.0f;
 }
 
 // Called when the game starts or when spawned
@@ -94,9 +95,9 @@ void ABAPlayerCharacter::BeginPlay()
 	BaseGravityScale = GetCharacterMovement()->GravityScale;
 	BaseMaxNumJumps = JumpMaxCount;
 
-	if (JumpSlideComboSpeedCurve != nullptr)
+	if (BaseSlideSpeedCurve != nullptr)
 	{
-		MaxHeightToGainSpeed = JumpSlideComboSpeedCurve->GetFloatValue(1.0f);
+		MaxHeightToGainSpeed = BaseSlideSpeedCurve->GetFloatValue(1.0f);
 	}
 
 	if (GetMesh() != nullptr)
@@ -310,14 +311,14 @@ float ABAPlayerCharacter::GetCurrentSlopeAngle()
 
 	float SlopeAngle = 0.0f;
 
-	//DrawDebugLine(GetWorld(), GetActorLocation(), End, FColor::Green, false, 0, 0, 5);
-
 	if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), End, ECC_Visibility, CollisionParams))
 	{
 		if (OutHit.bBlockingHit == true)
 		{
-			float DotProductNormal = FVector::DotProduct(-GetActorUpVector().GetSafeNormal(), OutHit.ImpactNormal.GetSafeNormal());
-			SlopeAngle = 180.0f - FMath::Acos(DotProductNormal);
+			SlopeDirection = OutHit.ImpactNormal;
+
+			float DotProductNormal = FVector::DotProduct(GetActorUpVector().GetSafeNormal(), OutHit.ImpactNormal.GetSafeNormal());
+			SlopeAngle = FMath::Acos(DotProductNormal);
 		}
 	}
 
@@ -341,15 +342,27 @@ void ABAPlayerCharacter::OnSlideStart()
 	//else start a timer that will maintain whatever velocity should be applied until the slide button is released
 	//	or until the slope evens out, 
 
-	//Make sure the player isnt over the max speed threshold
-	if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed && GetCharacterMovement()->Velocity.Size() != 0.0f)
-	{
-		float LookupAmount = GetCharacterMovement()->Velocity.Size() / SprintSpeed;
+	float CurveValue = GetCharacterMovement()->Velocity.Size() / SprintSpeed;
 
-		if (LookupAmount < SlideImpulseBoostTolerance)
+	if (SlopeAngle == 0.0f)
+	{
+		//Make sure the player isnt over the max speed threshold
+		if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed && GetCharacterMovement()->Velocity.Size() != 0.0f)
 		{
-			float SlideSpeed = JumpSlideComboSpeedCurve->GetFloatValue(LookupAmount);
-			GetCharacterMovement()->AddImpulse(GetActorForwardVector() * SlideSpeed * 5.0f, true);
+			if (CurveValue < MaxSlideCurveValue)
+			{
+				float SlideSpeed = BaseSlideSpeedCurve->GetFloatValue(CurveValue);
+				GetCharacterMovement()->AddImpulse(GetActorForwardVector() * SlideSpeed * 5.0f, true);
+			}
+		}
+	}
+	else
+	{
+		if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed)
+		{
+			//Need to trace down and get the current slope value to change the velocity
+			TimeSliding = 0.0f;
+			GetWorldTimerManager().SetTimer(SlidingOnSlopeTimerHandle, this, &ABAPlayerCharacter::MaintainSlidingSpeed, 0.01f, true);
 		}
 	}
 
@@ -357,6 +370,29 @@ void ABAPlayerCharacter::OnSlideStart()
 	{
 		AnimInstance->bIsSliding = true;
 	}
+}
+
+
+void ABAPlayerCharacter::MaintainSlidingSpeed()
+{
+	float SlideAngle = GetCurrentSlopeAngle();
+
+	if (SlideAngle <= 0.0f)
+	{
+		GetWorldTimerManager().ClearTimer(SlidingOnSlopeTimerHandle);
+
+		//return;
+	}
+
+	TimeSliding += GetWorldTimerManager().GetTimerElapsed(SlidingOnSlopeTimerHandle);
+
+	float SlideMultiplier =  SlideOnSlopeSpeedCurve->GetFloatValue(SlideAngle + (TimeSliding * TimeSlidingMuliplier));
+
+	FVector SlideSpeed = SlopeDirection * SlideMultiplier * 5.0f;
+	
+	//SetActorRotation(FQuat::MakeFromEuler(FVector(0.0f, 0.0f, SlopeDirection.X)));
+	
+	GetCharacterMovement()->Velocity = SlideSpeed;
 }
 
 
@@ -368,6 +404,8 @@ void ABAPlayerCharacter::OnSlideEnd()
 	}
 
 	bIsSliding = false;
+	GetWorldTimerManager().ClearTimer(SlidingOnSlopeTimerHandle);
+	SetActorRotation(FQuat::Identity);
 
 	GetWorldTimerManager().SetTimer(AllowSlidingTimerHandle, this, &ABAPlayerCharacter::EnableSliding, SlideCooldown, false);
 
