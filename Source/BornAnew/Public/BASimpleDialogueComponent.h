@@ -3,27 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SceneComponent.h"
+#include "Components/SphereComponent.h"
 #include "BASimpleDialogueComponent.generated.h"
 
-
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class BORNANEW_API UBASimpleDialogueComponent : public USceneComponent
+/**
+ * 
+ */
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+class BORNANEW_API UBASimpleDialogueComponent : public USphereComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
 	UBASimpleDialogueComponent();
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-	virtual void OnUnregister() override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class USphereComponent* SphereComp;
+	UPROPERTY(EditAnywhere, Category = "Dialogue")
+	class UBASimpleDialogueDataAsset* DialogueDataAsset;
 
 	UFUNCTION()
 	void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
