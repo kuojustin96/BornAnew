@@ -142,6 +142,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Sliding")
 	class UCurveFloat* SlideOnSlopeSpeedCurve;
 
+	/** Minimum angle the slope must be before the  */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
+	float SlideSlopeThreshold;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Sliding")
 	bool bIsSliding;
 
@@ -161,6 +165,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
 	float SlideCooldown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sliding")
+	float SlideDownSlopeInterpSpeed;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sliding")
 	float JumpSlideComboBuffer;

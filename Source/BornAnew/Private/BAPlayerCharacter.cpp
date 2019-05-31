@@ -75,6 +75,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SlideDownWallGravityScale = 0.25f;
 
 	SlideCooldown = 1.0f;
+	SlideSlopeThreshold = 0.04f;
+	SlideDownSlopeInterpSpeed = 5.0f;
 	JumpSlideComboBuffer = 0.25f;
 	JumpSlideTraceLength = 200.0f;
 	MaxSlideCurveValue = 1.5f;
@@ -322,6 +324,7 @@ float ABAPlayerCharacter::GetCurrentSlopeAngle()
 		}
 	}
 
+	//UE_LOG(LogTemp, Warning, TEXT("SlopeAngle: %f"), SlopeAngle);
 	return SlopeAngle;
 }
 
@@ -344,7 +347,8 @@ void ABAPlayerCharacter::OnSlideStart()
 
 	float CurveValue = GetCharacterMovement()->Velocity.Size() / SprintSpeed;
 
-	if (SlopeAngle == 0.0f)
+	//Probably want to change this to a slope angle threshold
+	if (SlopeAngle <= SlideSlopeThreshold)
 	{
 		//Make sure the player isnt over the max speed threshold
 		if (GetCharacterMovement()->Velocity.Size() < MaxMovementSpeed && GetCharacterMovement()->Velocity.Size() != 0.0f)
@@ -377,11 +381,11 @@ void ABAPlayerCharacter::MaintainSlidingSpeed()
 {
 	float SlideAngle = GetCurrentSlopeAngle();
 
-	if (SlideAngle <= 0.0f)
+	if (SlideAngle <= SlideSlopeThreshold)
 	{
 		GetWorldTimerManager().ClearTimer(SlidingOnSlopeTimerHandle);
 
-		//return;
+		return;
 	}
 
 	TimeSliding += GetWorldTimerManager().GetTimerElapsed(SlidingOnSlopeTimerHandle);
@@ -389,8 +393,13 @@ void ABAPlayerCharacter::MaintainSlidingSpeed()
 	float SlideMultiplier =  SlideOnSlopeSpeedCurve->GetFloatValue(SlideAngle + (TimeSliding * TimeSlidingMuliplier));
 
 	FVector SlideSpeed = SlopeDirection * SlideMultiplier * 5.0f;
-	
-	//SetActorRotation(FQuat::MakeFromEuler(FVector(0.0f, 0.0f, SlopeDirection.X)));
+
+	if (SlideAngle >= SlideSlopeThreshold)
+	{
+		float Yaw = FMath::FInterpTo(GetActorRotation().Yaw, SlopeDirection.Rotation().Yaw, GetWorld()->GetDeltaSeconds(), SlideDownSlopeInterpSpeed);
+		FQuat NewQuat = FQuat::MakeFromEuler(FVector(0.0f, 0.0f, Yaw));
+		SetActorRotation(NewQuat);
+	}
 	
 	GetCharacterMovement()->Velocity = SlideSpeed;
 }
@@ -405,7 +414,6 @@ void ABAPlayerCharacter::OnSlideEnd()
 
 	bIsSliding = false;
 	GetWorldTimerManager().ClearTimer(SlidingOnSlopeTimerHandle);
-	SetActorRotation(FQuat::Identity);
 
 	GetWorldTimerManager().SetTimer(AllowSlidingTimerHandle, this, &ABAPlayerCharacter::EnableSliding, SlideCooldown, false);
 
