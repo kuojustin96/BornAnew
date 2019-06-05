@@ -14,6 +14,7 @@ class BORNANEW_API UBASimpleDialogueDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
+public:
 	UPROPERTY(EditAnywhere)
 	FText Dialogue;
 };

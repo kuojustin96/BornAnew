@@ -16,8 +16,24 @@ class BORNANEW_API UBASimpleDialogueComponent : public USphereComponent
 
 	UBASimpleDialogueComponent();
 
+protected:
+
+	virtual void BeginPlay() override;
+
+	void LateBeginPlay();
+
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	class UBASimpleDialogueDataAsset* DialogueDataAsset;
+
+	UPROPERTY(EditAnywhere)
+	class UWidgetComponent* DialogueWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+	float PlaybackSpeed;
+
+	virtual void OnComponentCreated() override;
+
+	virtual void OnComponentDestroyed(bool bPromoteChildren) override;
 
 	UFUNCTION()
 	void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
