@@ -17,10 +17,8 @@ void UBASimpleDialogueWidget::NativeConstruct()
 
 void UBASimpleDialogueWidget::SetDialogueText(FText Text)
 {
-	UE_LOG(LogTemp, Warning, TEXT("PREPPING SET TEXT"));
 	if (DialogueText != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SETTING TEXT"));
 		DialogueText->SetText(Text);
 	}
 }
@@ -28,14 +26,12 @@ void UBASimpleDialogueWidget::SetDialogueText(FText Text)
 
 void UBASimpleDialogueWidget::EnableUI(float PlaybackSpeed)
 {
-	//Need to check if you need to reset animation if player goes in and out quickly
 	SetVisibility(ESlateVisibility::Visible);
 
 	if (FadeAnimation != nullptr)
 	{
 		if (PlaybackSpeed > 0.0f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Playing Fade In Animation"));
 			PlayAnimationForward(FadeAnimation, PlaybackSpeed);
 		}
 	}
@@ -58,6 +54,5 @@ void UBASimpleDialogueWidget::DisableUI(float PlaybackSpeed)
 
 void UBASimpleDialogueWidget::TurnOffUI()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Hid UI"));
 	SetVisibility(ESlateVisibility::Hidden);
 }

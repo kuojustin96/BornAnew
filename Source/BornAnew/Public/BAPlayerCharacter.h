@@ -112,6 +112,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Jump")
 	float DoubleJumpZVelocity;
 
+	/** How much movement velocity should be dampened when going from a slide directly to a jump */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jump")
+	float SlideJumpZDamping;
+
 	float BaseJumpZVelocity;
 
 	/** Absolute maximum speed a player can move at */

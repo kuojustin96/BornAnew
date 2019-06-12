@@ -63,6 +63,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	NumJumps = 0;
 	DoubleJumpZVelocity = 600.0f;
 	WallJumpZVelocity = 600.0f;
+	SlideJumpZDamping = 2.0f;
 	
 	bIsSliding = false;
 	bCanSlide = true;
@@ -227,13 +228,20 @@ void ABAPlayerCharacter::OnJump()
 		GetCharacterMovement()->JumpZVelocity = DoubleJumpZVelocity;
 	}
 
-	if (bIsOnWall)
+	if (bIsOnWall == true)
 	{
 		GetCharacterMovement()->JumpZVelocity = WallJumpZVelocity;
 
 		bIsOnWall = false;
 		GetCharacterMovement()->GravityScale = BaseGravityScale;
 		GetWorldTimerManager().ClearTimer(SlideDownWallTimerHandle);
+	}
+
+	if (bIsSliding == true)
+	{
+		bIsSliding = false;
+		GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity / SlideJumpZDamping;
+		UE_LOG(LogTemp, Warning, TEXT("HIT THAT JUMP WITH %f"), GetCharacterMovement()->JumpZVelocity);
 	}
 
 	NumJumps++;
@@ -379,6 +387,11 @@ void ABAPlayerCharacter::OnSlideStart()
 
 void ABAPlayerCharacter::MaintainSlidingSpeed()
 {
+	if (bIsSliding == false)
+	{
+		return;
+	}
+
 	float SlideAngle = GetCurrentSlopeAngle();
 
 	if (SlideAngle <= SlideSlopeThreshold)
@@ -401,6 +414,7 @@ void ABAPlayerCharacter::MaintainSlidingSpeed()
 		SetActorRotation(NewQuat);
 	}
 	
+	UE_LOG(LogTemp, Warning, TEXT("Maintaining Slide"));
 	GetCharacterMovement()->Velocity = SlideSpeed;
 }
 

@@ -36,8 +36,6 @@ void UBASimpleDialogueComponent::OnComponentDestroyed(bool bPromoteChildren)
 {
 	Super::OnComponentDestroyed(bPromoteChildren);
 
-	UE_LOG(LogTemp, Warning, TEXT("DESTROY COMP"));
-
 	if (DialogueWidget != nullptr)
 	{
 		DialogueWidget->DestroyComponent();
