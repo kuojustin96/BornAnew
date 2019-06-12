@@ -17,7 +17,7 @@ UBASimpleDialogueComponent::UBASimpleDialogueComponent()
 
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);
 
 	DialogueWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Dialogue Widget"));
 	DialogueWidget->SetWidgetSpace(EWidgetSpace::Screen);

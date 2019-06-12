@@ -21,7 +21,7 @@ ABAMovingPlatform::ABAMovingPlatform()
 	HitboxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("HitboxComp"));
 	HitboxComp->SetupAttachment(MeshComp);
 	HitboxComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	HitboxComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
+	HitboxComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);
 	HitboxComp->OnComponentBeginOverlap.AddDynamic(this, &ABAMovingPlatform::OnHitboxBeginOverlap);
 	HitboxComp->OnComponentEndOverlap.AddDynamic(this, &ABAMovingPlatform::OnHitboxEndOverlap);
 
