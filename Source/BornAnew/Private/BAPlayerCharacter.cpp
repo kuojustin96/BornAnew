@@ -65,6 +65,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	WallJumpZVelocity = 600.0f;
 	SlideJumpZDamping = 2.0f;
 	
+	bInputEnabled = true;
 	bIsSliding = false;
 	bCanSlide = true;
 	bIsOnWall = false;
@@ -140,8 +141,20 @@ void ABAPlayerCharacter::Tick(float DeltaSeconds)
 }
 
 
+void ABAPlayerCharacter::EnableMovementInputOnPlayer(bool bEnableInput)
+{
+	bInputEnabled = bEnableInput;
+}
+
+
 void ABAPlayerCharacter::MoveForward(float Value)
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	if (bIsOnWall)
 	{
 		return;
@@ -162,6 +175,12 @@ void ABAPlayerCharacter::MoveForward(float Value)
 
 void ABAPlayerCharacter::MoveRight(float Value)
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	if (bIsOnWall)
 	{
 		return;
@@ -183,6 +202,12 @@ void ABAPlayerCharacter::MoveRight(float Value)
 
 void ABAPlayerCharacter::TurnAtRate(float Rate)
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
@@ -190,6 +215,12 @@ void ABAPlayerCharacter::TurnAtRate(float Rate)
 
 void ABAPlayerCharacter::LookUpAtRate(float Rate)
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
@@ -217,6 +248,12 @@ void ABAPlayerCharacter::OnSprintEnd()
 
 void ABAPlayerCharacter::OnJump()
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	GetCharacterMovement()->bNotifyApex = true;
 	if (GetWorldTimerManager().IsTimerActive(JumpSlideBufferTimerHandle))
 	{
@@ -339,6 +376,12 @@ float ABAPlayerCharacter::GetCurrentSlopeAngle()
 
 void ABAPlayerCharacter::OnSlideStart()
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	//Check if not jumping, override if the player is within the jumpslide combo window
 	if (NumJumps > 0 && bCanSlide == false)
 	{
@@ -387,6 +430,12 @@ void ABAPlayerCharacter::OnSlideStart()
 
 void ABAPlayerCharacter::MaintainSlidingSpeed()
 {
+	//Check if input is enabled
+	if (bInputEnabled == false)
+	{
+		return;
+	}
+
 	if (bIsSliding == false)
 	{
 		return;

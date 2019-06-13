@@ -61,7 +61,10 @@ void UBASimpleDialogueComponent::LateBeginPlay()
 		{
 			if (DialogueDataAsset != nullptr)
 			{
-				DialogueComp->SetDialogueText(DialogueDataAsset->Dialogue);
+				if (DialogueDataAsset->Dialogue.Num() > 0)
+				{
+					DialogueComp->SetDialogueText(DialogueDataAsset->Dialogue[0]);
+				}
 			}
 		}
 	}

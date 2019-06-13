@@ -3,6 +3,10 @@
 
 #include "BACinematicCameraCut.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Camera/CameraComponent.h"
+#include "BAPlayerCharacter.h"
+#include "TimerManager.h"
 
 // Sets default values
 ABACinematicCameraCut::ABACinematicCameraCut()
@@ -13,19 +17,66 @@ ABACinematicCameraCut::ABACinematicCameraCut()
 	TriggerBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);
 	RootComponent = TriggerBox;
 
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(RootComponent);
+
 	bCanTriggerMultipleTimes = false;
 	bHasBeenTriggered = false;
+
+	CameraBlendTODuration = 1.0f;
+	CameraBlendFROMDuration = 1.0f;
+	CutDuration = 5.0f;
 }
 
 // Called when the game starts or when spawned
 void ABACinematicCameraCut::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	PlayerCharacter = Cast<ABAPlayerCharacter>(PlayerController->GetCharacter());
 }
 
 
 void ABACinematicCameraCut::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (bHasBeenTriggered == false)
+	{
+		if (PlayerController != nullptr && PlayerCharacter != nullptr)
+		{
+			bHasBeenTriggered = true;
 
+			PlayerController->SetViewTargetWithBlend(this, CameraBlendTODuration);
+			PlayerCharacter->EnableMovementInputOnPlayer(false);
+
+			FTimerHandle CutDurationTimerHandle;
+			GetWorldTimerManager().SetTimer(CutDurationTimerHandle, this, &ABACinematicCameraCut::CutBackToPlayerCameraPosition, CutDuration + CameraBlendTODuration, false);
+		}
+	}
+}
+
+
+void ABACinematicCameraCut::CutBackToPlayerCameraPosition()
+{
+	if (PlayerController != nullptr && PlayerCharacter != nullptr)
+	{
+		PlayerController->SetViewTargetWithBlend(PlayerCharacter, CameraBlendFROMDuration);
+
+		FTimerHandle BlendDurationTimerHandle;
+		GetWorldTimerManager().SetTimer(BlendDurationTimerHandle, this, &ABACinematicCameraCut::ReEnablePlayerMovementInput, CameraBlendFROMDuration, false);
+	}
+}
+
+
+void ABACinematicCameraCut::ReEnablePlayerMovementInput()
+{
+	if (PlayerCharacter != nullptr)
+	{
+		PlayerCharacter->EnableMovementInputOnPlayer(true);
+
+		if (bCanTriggerMultipleTimes == true)
+		{
+			bHasBeenTriggered = false;
+		}
+	}
 }
