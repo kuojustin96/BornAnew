@@ -15,6 +15,9 @@ public:
 	// Sets default values for this actor's properties
 	ABACinematicCameraCut();
 
+	UFUNCTION()
+	void BlendToPlayerCam();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -25,6 +28,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UCameraComponent* CameraComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> CinematicUIWidget;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Behavior")
 	bool bCanTriggerMultipleTimes;
 
@@ -34,7 +40,7 @@ protected:
 	void OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void CutBackToPlayerCameraPosition();
+	void CreateDialogueWidget();
 
 	UFUNCTION()
 	void ReEnablePlayerMovementInput();
@@ -55,4 +61,9 @@ protected:
 	class APlayerController* PlayerController;
 
 	class ABAPlayerCharacter* PlayerCharacter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	class UBASimpleDialogueDataAsset* DialogueDataAsset;
+
+	bool bHasDialogue;
 };

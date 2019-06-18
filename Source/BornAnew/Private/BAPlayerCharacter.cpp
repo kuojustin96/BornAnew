@@ -15,6 +15,7 @@
 #include "Curves/CurveFloat.h"
 #include "TimerManager.h"
 
+
 // Sets default values
 ABAPlayerCharacter::ABAPlayerCharacter()
 {
@@ -66,6 +67,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	SlideJumpZDamping = 2.0f;
 	
 	bInputEnabled = true;
+	bInteractEnabled = false;
 	bIsSliding = false;
 	bCanSlide = true;
 	bIsOnWall = false;
@@ -121,6 +123,7 @@ void ABAPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ABAPlayerCharacter::OnSprintEnd);
 	PlayerInputComponent->BindAction("Slide", IE_Pressed, this, &ABAPlayerCharacter::OnSlideStart);
 	PlayerInputComponent->BindAction("Slide", IE_Released, this, &ABAPlayerCharacter::OnSlideEnd);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ABAPlayerCharacter::OnInteract);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABAPlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABAPlayerCharacter::MoveRight);
@@ -144,6 +147,21 @@ void ABAPlayerCharacter::Tick(float DeltaSeconds)
 void ABAPlayerCharacter::EnableMovementInputOnPlayer(bool bEnableInput)
 {
 	bInputEnabled = bEnableInput;
+}
+
+
+void ABAPlayerCharacter::EnableInteract(bool bEnableInteract)
+{
+	bInteractEnabled = bEnableInteract;
+}
+
+
+void ABAPlayerCharacter::OnInteract()
+{
+	if (bInteractEnabled == true)
+	{
+		Interact.Broadcast();
+	}
 }
 
 

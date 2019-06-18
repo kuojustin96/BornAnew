@@ -7,6 +7,9 @@
 #include "BAPlayerCharacter.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteract);
+
+
 class UBAPlayerAnimInstance;
 
 
@@ -26,6 +29,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void EnableMovementInputOnPlayer(bool bEnableInput);
+
+	void EnableInteract(bool bEnableInteract);
+
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay")
+	FOnInteract Interact;
 
 protected:
 	// Called when the game starts or when spawned
@@ -82,6 +90,9 @@ protected:
 	UFUNCTION()
 	void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void OnInteract();
+
 protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -101,6 +112,8 @@ protected:
 
 protected:
 	bool bInputEnabled;
+
+	bool bInteractEnabled;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")

@@ -7,6 +7,8 @@
 #include "Camera/CameraComponent.h"
 #include "BAPlayerCharacter.h"
 #include "TimerManager.h"
+#include "BASimpleDialogueDataAsset.h"
+#include "BADialogueWidget.h"
 
 // Sets default values
 ABACinematicCameraCut::ABACinematicCameraCut()
@@ -35,6 +37,15 @@ void ABACinematicCameraCut::BeginPlay()
 
 	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	PlayerCharacter = Cast<ABAPlayerCharacter>(PlayerController->GetCharacter());
+
+	if (DialogueDataAsset != nullptr)
+	{
+		bHasDialogue = true;
+	}
+	else
+	{
+		bHasDialogue = false;
+	}
 }
 
 
@@ -50,20 +61,48 @@ void ABACinematicCameraCut::OnTriggerBeginOverlap(UPrimitiveComponent* Overlappe
 			PlayerCharacter->EnableMovementInputOnPlayer(false);
 
 			FTimerHandle CutDurationTimerHandle;
-			GetWorldTimerManager().SetTimer(CutDurationTimerHandle, this, &ABACinematicCameraCut::CutBackToPlayerCameraPosition, CutDuration + CameraBlendTODuration, false);
+			if (DialogueDataAsset != nullptr)
+			{
+				//Create a dialogue widget for the player to interact with
+				GetWorldTimerManager().SetTimer(CutDurationTimerHandle, this, &ABACinematicCameraCut::CreateDialogueWidget,CameraBlendTODuration, false);
+			}
+			else
+			{
+				//Blend the camera back to the default player camera position
+				GetWorldTimerManager().SetTimer(CutDurationTimerHandle, this, &ABACinematicCameraCut::BlendToPlayerCam, CutDuration + CameraBlendTODuration, false);
+			}
 		}
 	}
 }
 
 
-void ABACinematicCameraCut::CutBackToPlayerCameraPosition()
+void ABACinematicCameraCut::BlendToPlayerCam()
 {
+	//Blend the camera back to the default player camera position
 	if (PlayerController != nullptr && PlayerCharacter != nullptr)
 	{
 		PlayerController->SetViewTargetWithBlend(PlayerCharacter, CameraBlendFROMDuration);
 
 		FTimerHandle BlendDurationTimerHandle;
 		GetWorldTimerManager().SetTimer(BlendDurationTimerHandle, this, &ABACinematicCameraCut::ReEnablePlayerMovementInput, CameraBlendFROMDuration, false);
+	}
+}
+
+
+//TODO: Hide main gameplay widget when you enable the dialogue widget
+void ABACinematicCameraCut::CreateDialogueWidget()
+{
+	if (CinematicUIWidget != nullptr)
+	{
+		UBADialogueWidget* DialogueWidget = CreateWidget<UBADialogueWidget>(GetWorld(), CinematicUIWidget);
+		if (DialogueWidget != nullptr && PlayerCharacter != nullptr)
+		{
+			DialogueWidget->SetRenderOpacity(0.0f);
+			PlayerCharacter->EnableInteract(true);
+
+			DialogueWidget->EnableDialogueUI(this, DialogueDataAsset, bCanTriggerMultipleTimes);
+			DialogueWidget->AddToViewport();
+		}
 	}
 }
 
