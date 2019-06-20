@@ -386,8 +386,14 @@ float ABAPlayerCharacter::GetCurrentSlopeAngle()
 			SlopeAngle = FMath::Acos(DotProductNormal);
 		}
 	}
+	else
+	{
+		//Disallow sliding if the trace doesn't hit anything
+		bCanSlide = false;
 
-	//UE_LOG(LogTemp, Warning, TEXT("SlopeAngle: %f"), SlopeAngle);
+		UE_LOG(LogTemp, Warning, TEXT("Disable Sliding"));
+	}
+
 	return SlopeAngle;
 }
 
@@ -396,6 +402,14 @@ void ABAPlayerCharacter::OnSlideStart()
 {
 	//Check if input is enabled
 	if (bInputEnabled == false)
+	{
+		return;
+	}
+
+	float SlopeAngle = GetCurrentSlopeAngle();
+
+	//Check if sliding is enabled
+	if (bCanSlide == false)
 	{
 		return;
 	}
@@ -409,7 +423,6 @@ void ABAPlayerCharacter::OnSlideStart()
 	bIsSliding = true;
 	bCanSlide = false;
 
-	float SlopeAngle = GetCurrentSlopeAngle();
 	//if player is not a slope, run original code
 	//else start a timer that will maintain whatever velocity should be applied until the slide button is released
 	//	or until the slope evens out, 
@@ -454,12 +467,12 @@ void ABAPlayerCharacter::MaintainSlidingSpeed()
 		return;
 	}
 
+	float SlideAngle = GetCurrentSlopeAngle();
+
 	if (bIsSliding == false)
 	{
 		return;
 	}
-
-	float SlideAngle = GetCurrentSlopeAngle();
 
 	if (SlideAngle <= SlideSlopeThreshold)
 	{
