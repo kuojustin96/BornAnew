@@ -35,6 +35,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay")
 	FOnInteract Interact;
 
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void EnableMainGameplayUI();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void DisableMainGameplayUI();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -213,6 +219,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wall Jump")
 	float SlideDownWallGravityScale;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UBAMainGameplayUI> MainGameplayUIWidget;
+
+	class UBAMainGameplayUI* MainGameplayUI;
 
 protected:
 	FTimerHandle AllowSlidingTimerHandle;

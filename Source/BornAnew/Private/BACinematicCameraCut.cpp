@@ -59,6 +59,7 @@ void ABACinematicCameraCut::OnTriggerBeginOverlap(UPrimitiveComponent* Overlappe
 
 			PlayerController->SetViewTargetWithBlend(this, CameraBlendTODuration);
 			PlayerCharacter->EnableMovementInputOnPlayer(false);
+			PlayerCharacter->DisableMainGameplayUI();
 
 			FTimerHandle CutDurationTimerHandle;
 			if (DialogueDataAsset != nullptr)
@@ -112,6 +113,7 @@ void ABACinematicCameraCut::ReEnablePlayerMovementInput()
 	if (PlayerCharacter != nullptr)
 	{
 		PlayerCharacter->EnableMovementInputOnPlayer(true);
+		PlayerCharacter->EnableMainGameplayUI();
 
 		if (bCanTriggerMultipleTimes == true)
 		{

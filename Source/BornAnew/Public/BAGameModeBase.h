@@ -13,5 +13,4 @@ UCLASS()
 class BORNANEW_API ABAGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
 };

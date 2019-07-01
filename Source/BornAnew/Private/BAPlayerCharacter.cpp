@@ -14,6 +14,7 @@
 #include "BACollectableObject.h"
 #include "Curves/CurveFloat.h"
 #include "TimerManager.h"
+#include "BAMainGameplayUI.h"
 
 
 // Sets default values
@@ -109,6 +110,12 @@ void ABAPlayerCharacter::BeginPlay()
 	if (GetMesh() != nullptr)
 	{
 		AnimInstance = Cast<UBAPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	}
+
+	if (MainGameplayUIWidget != nullptr)
+	{
+		MainGameplayUI = CreateWidget<UBAMainGameplayUI>(GetWorld(), MainGameplayUIWidget);
+		MainGameplayUI->AddToViewport();
 	}
 }
 
@@ -557,5 +564,25 @@ void ABAPlayerCharacter::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedCom
 	if (Collectable != nullptr)
 	{
 		Collectable->OnCollected();
+	}
+}
+
+
+void ABAPlayerCharacter::EnableMainGameplayUI()
+{
+	if (MainGameplayUI != nullptr)
+	{
+		MainGameplayUI->SetRenderOpacity(1.0f);
+		MainGameplayUI->SetIsEnabled(true);
+	}
+}
+
+
+void ABAPlayerCharacter::DisableMainGameplayUI()
+{
+	if (MainGameplayUI != nullptr)
+	{
+		MainGameplayUI->SetRenderOpacity(0.0f);
+		MainGameplayUI->SetIsEnabled(false);
 	}
 }
