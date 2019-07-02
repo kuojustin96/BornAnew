@@ -32,6 +32,7 @@ void UBASimpleDialogueWidget::EnableUI(float PlaybackSpeed)
 	{
 		if (PlaybackSpeed > 0.0f)
 		{
+			GetWorld()->GetTimerManager().ClearTimer(FadeOutTimerHandle);
 			PlayAnimationForward(FadeAnimation, PlaybackSpeed);
 		}
 	}
