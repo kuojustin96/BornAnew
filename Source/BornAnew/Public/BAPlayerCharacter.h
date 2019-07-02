@@ -155,6 +155,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float SprintSpeed;
 
+	bool bHoldingDownSprintKey;
+
 	float BaseWalkSpeed;
 
 	/** FOV the camera will transition to when sprinting */

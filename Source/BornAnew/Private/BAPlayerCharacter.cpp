@@ -69,6 +69,7 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	
 	bInputEnabled = true;
 	bInteractEnabled = false;
+	bHoldingDownSprintKey = true;
 	bIsSliding = false;
 	bCanSlide = true;
 	bIsOnWall = false;
@@ -256,6 +257,7 @@ void ABAPlayerCharacter::OnSprintStart()
 	//Check if not jumping
 	if (NumJumps > 0)
 	{
+		bHoldingDownSprintKey = true;
 		return;
 	}
 
@@ -266,6 +268,7 @@ void ABAPlayerCharacter::OnSprintStart()
 
 void ABAPlayerCharacter::OnSprintEnd()
 {
+	bHoldingDownSprintKey = false;
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	FollowCamera->SetFieldOfView(BaseWalkingFOV);
 }
@@ -340,6 +343,11 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 	{
 		JumpMaxCount = BaseMaxNumJumps;
 		bCanWallJump = true;
+	}
+
+	if (bHoldingDownSprintKey == true)
+	{
+		OnSprintStart();
 	}
 
 	if (AnimInstance != nullptr)
