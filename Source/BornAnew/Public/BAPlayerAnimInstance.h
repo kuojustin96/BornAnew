@@ -26,4 +26,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	bool bIsSliding;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool bIsFalling;
 };

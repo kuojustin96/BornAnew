@@ -338,6 +338,8 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 	NumJumps = 0;
 	GetCharacterMovement()->JumpZVelocity = BaseJumpZVelocity;
 
+	bCanSlide = true;
+
 	//Reset max jumps if the player just wall jumped
 	if (JumpMaxCount > BaseMaxNumJumps)
 	{
@@ -353,6 +355,7 @@ void ABAPlayerCharacter::Landed(const FHitResult& Hit)
 	if (AnimInstance != nullptr)
 	{
 		AnimInstance->bIsJumping = false;
+		AnimInstance->bIsFalling = false;
 	}
 }
 
@@ -592,5 +595,18 @@ void ABAPlayerCharacter::DisableMainGameplayUI()
 	{
 		MainGameplayUI->SetRenderOpacity(0.0f);
 		MainGameplayUI->SetIsEnabled(false);
+	}
+}
+
+
+void ABAPlayerCharacter::ApplyForce(FVector ForceAmount, bool bOverrideXY, bool bOverrideZ, int32 JumpsToAdd /*= 1*/)
+{
+	LaunchCharacter(ForceAmount, bOverrideXY, bOverrideZ);
+	
+	NumJumps += JumpsToAdd;
+
+	if (AnimInstance != nullptr)
+	{
+		AnimInstance->bIsFalling = true;
 	}
 }

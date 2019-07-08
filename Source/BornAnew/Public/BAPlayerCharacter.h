@@ -41,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void DisableMainGameplayUI();
 
+	UFUNCTION()
+	void ApplyForce(FVector ForceAmount, bool bOverrideXY, bool bOverrideZ, int32 JumpsToAdd = 1);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
