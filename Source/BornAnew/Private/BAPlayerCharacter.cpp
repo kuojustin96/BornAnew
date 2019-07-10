@@ -306,7 +306,6 @@ void ABAPlayerCharacter::OnJump()
 	{
 		bIsSliding = false;
 		GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity / SlideJumpZDamping;
-		UE_LOG(LogTemp, Warning, TEXT("HIT THAT JUMP WITH %f"), GetCharacterMovement()->JumpZVelocity);
 	}
 
 	NumJumps++;
@@ -575,6 +574,7 @@ void ABAPlayerCharacter::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedCom
 	if (Collectable != nullptr)
 	{
 		Collectable->OnCollected();
+		CollectablePickedUp.Broadcast(Collectable->GetActorLocation());
 	}
 }
 

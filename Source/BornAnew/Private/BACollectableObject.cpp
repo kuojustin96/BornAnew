@@ -26,6 +26,7 @@ void ABACollectableObject::BeginPlay()
 void ABACollectableObject::OnCollected_Implementation()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Object Collected!"));
+	MeshComp->SetGenerateOverlapEvents(false);
 	MeshComp->SetVisibility(false);
 
 	SetLifeSpan(LifespanAfterCollection);

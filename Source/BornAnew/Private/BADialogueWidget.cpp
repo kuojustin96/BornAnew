@@ -18,7 +18,6 @@ void UBADialogueWidget::NativeConstruct()
 	ABAPlayerCharacter* PlayerChar = Cast<ABAPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (PlayerChar != nullptr)
 	{
-		//probably want to add a bool in playercharacter that allows for player interaction
 		PlayerChar->Interact.AddDynamic(this, &UBADialogueWidget::OnInteract);
 	}
 

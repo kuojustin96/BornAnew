@@ -8,6 +8,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteract);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCollectablePickedUp, FVector, CollectablePosition);
 
 
 class UBAPlayerAnimInstance;
@@ -34,6 +35,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay")
 	FOnInteract Interact;
+
+	UPROPERTY(BlueprintAssignable, Category = "Gameplay")
+	FOnCollectablePickedUp CollectablePickedUp;
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void EnableMainGameplayUI();
