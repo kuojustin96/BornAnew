@@ -9,13 +9,15 @@
 #include "Components/CanvasPanelSlot.h"
 #include "RandomStream.h"
 #include "TimerManager.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/CanvasPanel.h"
 
 
 UBAMainGameplayUI::UBAMainGameplayUI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	RandomUnitVectorCircleRadius = 300.0f;
 	BezierCurveSpeed = 0.05f;
-	CurrentStepValue = 0.0f;
+	BezierExtraAnimationSpeed = 1.0f;
 }
 
 
@@ -35,10 +37,11 @@ void UBAMainGameplayUI::NativeConstruct()
 		CollectableCounterUIPosition = CanvasSlot->GetPosition();
 	}
 
-	if (CollectableUIImage != nullptr)
+	if (CollectableUIIcon != nullptr)
 	{
-		CollectableUIImageCanvasSlot = Cast<UCanvasPanelSlot>(CollectableUIImage->Slot);
-		CollectableUIImage->SetVisibility(ESlateVisibility::Hidden);
+		UCanvasPanelSlot* CollectableUIIconCanvasSlot = Cast<UCanvasPanelSlot>(CollectableUIIcon->Slot);
+		CollectableIconSlots.Enqueue(CollectableUIIconCanvasSlot);
+		CollectableUIIconCanvasSlot->Content->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -46,25 +49,50 @@ void UBAMainGameplayUI::NativeConstruct()
 void UBAMainGameplayUI::OnCollectablePickedUp(FVector CollectablePosition)
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	if (PlayerController != nullptr && CollectableUIImageCanvasSlot != nullptr)
+	if (PlayerController != nullptr && CollectableUIIcon != nullptr)
 	{
+		UCanvasPanelSlot* WidgetPanel;
+		if (CollectableIconSlots.IsEmpty() == false)
+		{
+			CollectableIconSlots.Dequeue(WidgetPanel);
+		}
+		else
+		{
+			if (CollectableUIIconWdigetClass != nullptr)
+			{
+				UUserWidget* Widget = WidgetTree->ConstructWidget<UUserWidget>(CollectableUIIconWdigetClass);
+				MainCanvas->AddChild(Widget);
+
+				UCanvasPanelSlot* WidgetPanelSlot = Cast<UCanvasPanelSlot>(Widget->Slot);
+				WidgetPanel = WidgetPanelSlot;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CLASS GIVEN"));
+				return;
+			}
+		}
+
 		FVector2D ScreenPos;
 		PlayerController->ProjectWorldLocationToScreen(CollectablePosition, ScreenPos);
 
-		int32 width;
-		int32 height;
-		PlayerController->GetViewportSize(width, height);
-		ScreenPos.X /= width;
-		ScreenPos.Y /= height;
-
-		CollectableScreenPosition = ScreenPos;
+		FVector2D CollectableScreenPosition = ScreenPos * 1.5f;
 
 		CalculateInitialBezierCurvePoints(ScreenPos, CollectableCounterUIPosition, BezierPoint1, BezierPoint2);
-		CollectableUIImage->SetVisibility(ESlateVisibility::Visible);
+		WidgetPanel->Content->SetVisibility(ESlateVisibility::Visible);
+		OnCollectablePickedUpExtras(WidgetPanel->Content);
+
+		float CurrentStepValue = 0.0f;
 
 		FTimerDelegate TimerDelgate;
-		TimerDelgate.BindUFunction(this, FName("MoveCollectableUIAlongCurve"));
+		TimerDelgate.BindUFunction(this, FName("MoveCollectableUIAlongCurve"), WidgetPanel, CollectableScreenPosition, CurrentStepValue);
 		GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelgate);
+
+		//Replace with a call to the widget animation
+		if (BezierCurveExtraAnimation != nullptr)
+		{
+			PlayAnimation(BezierCurveExtraAnimation, 0.0f, 1, EUMGSequencePlayMode::Forward, BezierExtraAnimationSpeed);
+		}
 	}
 }
 
@@ -116,22 +144,24 @@ FVector2D UBAMainGameplayUI::GetPointOnBezierCurve(FVector2D p0, FVector2D p1, F
 }
 
 
-void UBAMainGameplayUI::MoveCollectableUIAlongCurve()
+void UBAMainGameplayUI::MoveCollectableUIAlongCurve(UCanvasPanelSlot* PanelSlot, FVector2D CollectableScreenPosition, float CurrentStepValue)
 {
 	FVector2D Position = GetPointOnBezierCurve(CollectableScreenPosition, BezierPoint1, BezierPoint2, CollectableCounterUIPosition, CurrentStepValue);
-	CollectableUIImageCanvasSlot->SetPosition(Position);
+	PanelSlot->SetPosition(Position);
 
 	CurrentStepValue += BezierCurveSpeed;
 
 	if (CurrentStepValue < 1.0f)
 	{
 		FTimerDelegate TimerDelgate;
-		TimerDelgate.BindUFunction(this, FName("MoveCollectableUIAlongCurve"));
+		TimerDelgate.BindUFunction(this, FName("MoveCollectableUIAlongCurve"), PanelSlot, CollectableScreenPosition, CurrentStepValue);
 		GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelgate);
 	}
 	else
 	{
-		CollectableUIImage->SetVisibility(ESlateVisibility::Hidden);
-		CurrentStepValue = 0.0f;
+		PanelSlot->Content->SetVisibility(ESlateVisibility::Hidden);
+
+		//Return widget to queue
+		CollectableIconSlots.Enqueue(PanelSlot);
 	}
 }

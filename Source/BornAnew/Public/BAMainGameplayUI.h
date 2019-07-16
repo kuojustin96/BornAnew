@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Containers/Queue.h"
 #include "BAMainGameplayUI.generated.h"
 
 /**
@@ -20,12 +21,24 @@ protected:
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
-	class UImage* CollectableUIImage;
+	class UUserWidget* CollectableUIIcon;
 
-	class UCanvasPanelSlot* CollectableUIImageCanvasSlot;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	class TSubclassOf<UUserWidget> CollectableUIIconWdigetClass;
+
+	TQueue<UCanvasPanelSlot*> CollectableIconSlots;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
 	class UImage* CollectableCounterUI;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	class UCanvasPanel* MainCanvas;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UWidgetAnimation* BezierCurveExtraAnimation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (ClampMin = "0.001"))
+	float BezierExtraAnimationSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (ClampMin = "0.001", ClampMax = "1.0"))
 	float BezierCurveSpeed;
@@ -33,18 +46,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (ClampMin = "0.0"))
 	float RandomUnitVectorCircleRadius;
 
-	FVector2D CollectableScreenPosition;
-
 	FVector2D CollectableCounterUIPosition;
 
 	FVector2D BezierPoint1;
 
 	FVector2D BezierPoint2;
 
-	float CurrentStepValue;
-
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Collectable")
 	void OnCollectablePickedUp(FVector CollectablePosition);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Collectable")
+	void OnCollectablePickedUpExtras(UWidget* Widget);
 
 	UFUNCTION(BlueprintCallable)
 	void CalculateInitialBezierCurvePoints(FVector2D StartPoint, FVector2D EndPoint, FVector2D &BezPoint1, FVector2D &BezPoint2);
@@ -53,5 +65,5 @@ protected:
 	FVector2D GetPointOnBezierCurve(FVector2D p0, FVector2D p1, FVector2D p2, FVector2D p3, float t);
 
 	UFUNCTION()
-	void MoveCollectableUIAlongCurve();
+	void MoveCollectableUIAlongCurve(UCanvasPanelSlot* PanelSlot, FVector2D CollectableScreenPosition, float CurrentStepValue);
 };
