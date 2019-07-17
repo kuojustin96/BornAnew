@@ -87,6 +87,8 @@ ABAPlayerCharacter::ABAPlayerCharacter()
 	JumpSlideTraceLength = 200.0f;
 	MaxSlideCurveValue = 1.5f;
 	TimeSlidingMuliplier = 10.0f;
+
+	CollectableCounter = 0;
 }
 
 // Called when the game starts or when spawned
@@ -573,6 +575,8 @@ void ABAPlayerCharacter::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedCom
 	ABACollectableObject* Collectable = Cast<ABACollectableObject>(OtherActor);
 	if (Collectable != nullptr)
 	{
+		CollectableCounter++;
+
 		Collectable->OnCollected();
 		CollectablePickedUp.Broadcast(Collectable->GetActorLocation());
 	}

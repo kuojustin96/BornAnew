@@ -48,6 +48,8 @@ public:
 	UFUNCTION()
 	void ApplyForce(FVector ForceAmount, bool bOverrideXY, bool bOverrideZ, int32 JumpsToAdd = 1);
 
+	FORCEINLINE int32 GetNumCollectables() const { return CollectableCounter; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -233,6 +235,8 @@ protected:
 	TSubclassOf<class UBAMainGameplayUI> MainGameplayUIWidget;
 
 	class UBAMainGameplayUI* MainGameplayUI;
+
+	int32 CollectableCounter;
 
 protected:
 	FTimerHandle AllowSlidingTimerHandle;

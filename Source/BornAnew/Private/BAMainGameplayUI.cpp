@@ -11,13 +11,14 @@
 #include "TimerManager.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
+#include "Components/TextBlock.h"
 
 
 UBAMainGameplayUI::UBAMainGameplayUI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	RandomUnitVectorCircleRadius = 300.0f;
 	BezierCurveSpeed = 0.05f;
-	BezierExtraAnimationSpeed = 1.0f;
+	UICollectableCounter = 0;
 }
 
 
@@ -25,31 +26,27 @@ void UBAMainGameplayUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	ABAPlayerCharacter* PlayerChar = Cast<ABAPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
-	if (PlayerChar != nullptr)
+	PlayerCharacter = Cast<ABAPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	if (PlayerCharacter != nullptr)
 	{
-		PlayerChar->CollectablePickedUp.AddDynamic(this, &UBAMainGameplayUI::OnCollectablePickedUp);
+		PlayerCharacter->CollectablePickedUp.AddDynamic(this, &UBAMainGameplayUI::OnCollectablePickedUp);
 	}
 
-	if (CollectableCounterUI != nullptr)
-	{
-		UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(CollectableCounterUI->Slot);
-		CollectableCounterUIPosition = CanvasSlot->GetPosition();
-	}
+	UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(CollectableCounterUI->Slot);
+	CollectableCounterUIPosition = CanvasSlot->GetPosition();
 
-	if (CollectableUIIcon != nullptr)
-	{
-		UCanvasPanelSlot* CollectableUIIconCanvasSlot = Cast<UCanvasPanelSlot>(CollectableUIIcon->Slot);
-		CollectableIconSlots.Enqueue(CollectableUIIconCanvasSlot);
-		CollectableUIIconCanvasSlot->Content->SetVisibility(ESlateVisibility::Hidden);
-	}
+	UCanvasPanelSlot* CollectableUIIconCanvasSlot = Cast<UCanvasPanelSlot>(CollectableUIIcon->Slot);
+	CollectableIconSlots.Enqueue(CollectableUIIconCanvasSlot);
+	CollectableUIIconCanvasSlot->Content->SetVisibility(ESlateVisibility::Hidden);
+
+	CollectableCounterText->SetText(FText::FromString(FString("0")));
 }
 
 
 void UBAMainGameplayUI::OnCollectablePickedUp(FVector CollectablePosition)
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	if (PlayerController != nullptr && CollectableUIIcon != nullptr)
+	if (PlayerController != nullptr)
 	{
 		UCanvasPanelSlot* WidgetPanel;
 		if (CollectableIconSlots.IsEmpty() == false)
@@ -87,12 +84,6 @@ void UBAMainGameplayUI::OnCollectablePickedUp(FVector CollectablePosition)
 		FTimerDelegate TimerDelgate;
 		TimerDelgate.BindUFunction(this, FName("MoveCollectableUIAlongCurve"), WidgetPanel, CollectableScreenPosition, CurrentStepValue);
 		GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDelgate);
-
-		//Replace with a call to the widget animation
-		if (BezierCurveExtraAnimation != nullptr)
-		{
-			PlayAnimation(BezierCurveExtraAnimation, 0.0f, 1, EUMGSequencePlayMode::Forward, BezierExtraAnimationSpeed);
-		}
 	}
 }
 
@@ -163,5 +154,9 @@ void UBAMainGameplayUI::MoveCollectableUIAlongCurve(UCanvasPanelSlot* PanelSlot,
 
 		//Return widget to queue
 		CollectableIconSlots.Enqueue(PanelSlot);
+
+		UICollectableCounter++;
+		FText CollectableCount = FText::FromString(FString::FromInt(UICollectableCounter));
+		CollectableCounterText->SetText(CollectableCount);
 	}
 }

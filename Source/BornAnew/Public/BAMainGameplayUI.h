@@ -20,7 +20,9 @@ class BORNANEW_API UBAMainGameplayUI : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	class ABAPlayerCharacter* PlayerCharacter;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI", meta=(BindWidget))
 	class UUserWidget* CollectableUIIcon;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
@@ -28,17 +30,16 @@ protected:
 
 	TQueue<UCanvasPanelSlot*> CollectableIconSlots;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	UPROPERTY(BlueprintReadOnly, Category = "UI", meta=(BindWIdget))
 	class UImage* CollectableCounterUI;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+	UPROPERTY(BlueprintReadOnly, Category = "UI", meta = (BindWidget))
+	class UTextBlock* CollectableCounterText;
+
+	int32 UICollectableCounter;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI", meta=(BindWidget))
 	class UCanvasPanel* MainCanvas;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Animation")
-	class UWidgetAnimation* BezierCurveExtraAnimation;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (ClampMin = "0.001"))
-	float BezierExtraAnimationSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI", meta = (ClampMin = "0.001", ClampMax = "1.0"))
 	float BezierCurveSpeed;
